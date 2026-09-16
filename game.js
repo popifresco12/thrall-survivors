@@ -29,17 +29,17 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 // ---------------------------------------------------------------- config
 const WORLD = { w: 2600, h: 2600 };
 const RUN_TIME = (typeof window !== 'undefined' && window.__RUN_TIME) || 300;  // segundos hasta el jefe
-const PLAYER = { r: 16, speed: 196, hp: 130 };
+const PLAYER = { r: 19, speed: 196, hp: 130 };
 const HAMMER = { cd: 0.85, range: 66, arc: 1.9, dmg: 22 };
 const BOLT = { cd: 2.6, range: 270, targets: 3, dmg: 20, falloff: 0.86 };
 // hooks de test (opcionales): window.__RUN_TIME y window.__BOSS_HP
 const BOSS_HP = (typeof window !== 'undefined' && window.__BOSS_HP) || 1250;
 
 const ENEMY_TYPES = {
-  kobold: { name:'Kobold', r:13, hp:22,  spd:62,  dmg:6,  xp:2, color:'#b98a4f', from:0,   weight:5 },
-  murloc: { name:'Murloc', r:12, hp:15,  spd:99,  dmg:5,  xp:2, color:'#5fb7a6', from:20,  weight:4 },
-  gnoll:  { name:'Gnoll',  r:16, hp:44,  spd:56,  dmg:11, xp:4, color:'#8a6a45', from:55,  weight:3 },
-  wolf:   { name:'Lobo',   r:14, hp:26,  spd:130, dmg:8,  xp:3, color:'#9aa0a6', from:90,  weight:3 },
+  kobold: { name:'Kobold', r:15, hp:22,  spd:62,  dmg:6,  xp:2, color:'#b98a4f', from:0,   weight:5 },
+  murloc: { name:'Murloc', r:14, hp:15,  spd:99,  dmg:5,  xp:2, color:'#5fb7a6', from:20,  weight:4 },
+  gnoll:  { name:'Gnoll',  r:18, hp:44,  spd:56,  dmg:11, xp:4, color:'#8a6a45', from:55,  weight:3 },
+  wolf:   { name:'Lobo',   r:16, hp:26,  spd:130, dmg:8,  xp:3, color:'#9aa0a6', from:90,  weight:3 },
 };
 
 const UPGRADES = [
@@ -83,7 +83,7 @@ function buildDecor() {
   for (let i = 0; i < 460; i++) {
     const x = r() * WORLD.w, y = r() * WORLD.h;
     const t = r();
-    arr.push({ x, y, s: 0.7 + r() * 0.9, kind: t < 0.42 ? 'bush' : t < 0.82 ? 'tree' : 'rock' });
+    arr.push({ x, y, s: 0.9 + r() * 1.0, kind: t < 0.42 ? 'bush' : t < 0.82 ? 'tree' : 'rock' });
   }
   return arr;
 }
@@ -438,21 +438,44 @@ function render() {
 }
 
 function drawGround(cam) {
-  ctx.fillStyle = '#22331f'; ctx.fillRect(0, 0, VW, VH);
-  // parches de hierba (rejilla con jitter determinista)
-  const g = 96, x0 = Math.floor(cam.x / g) * g, y0 = Math.floor(cam.y / g) * g;
+  ctx.fillStyle = '#3b5c33'; ctx.fillRect(0, 0, VW, VH);
+
+  // manchas de hierba (bajo contraste: dan textura sin parecer manchas)
+  const g = 68, x0 = Math.floor(cam.x / g) * g, y0 = Math.floor(cam.y / g) * g;
   for (let x = x0; x < cam.x + VW + g; x += g) {
     for (let y = y0; y < cam.y + VH + g; y += g) {
       const h = ((x * 73856093) ^ (y * 19349663)) & 255;
-      if (h < 90) {
-        ctx.fillStyle = h < 40 ? '#28391f' : '#1d2c1b';
-        ctx.beginPath(); ctx.ellipse(x - cam.x + (h % 31), y - cam.y + (h % 17), 46, 30, 0, 0, TAU); ctx.fill();
+      if (h < 150) {
+        ctx.fillStyle = h < 60 ? 'rgba(76,116,60,.42)' : 'rgba(44,72,36,.34)';
+        ctx.beginPath();
+        ctx.ellipse(x - cam.x + (h % 21), y - cam.y + (h % 13), 32, 21, 0, 0, TAU);
+        ctx.fill();
       }
     }
   }
+
+  // briznas finas (detalle de cerca)
+  const g2 = 30, bx = Math.floor(cam.x / g2) * g2, by = Math.floor(cam.y / g2) * g2;
+  ctx.strokeStyle = 'rgba(130,180,95,.28)'; ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  for (let x = bx; x < cam.x + VW + g2; x += g2) {
+    for (let y = by; y < cam.y + VH + g2; y += g2) {
+      const h = ((x * 374761393) ^ (y * 668265263)) & 255;
+      if (h < 70) {
+        const px = x - cam.x + (h % 17), py = y - cam.y + (h % 9);
+        ctx.moveTo(px, py); ctx.lineTo(px + ((h % 5) - 2), py - 4 - (h % 3));
+        ctx.moveTo(px + 3, py); ctx.lineTo(px + 3 + ((h % 5) - 2), py - 3 - (h % 4));
+      }
+    }
+  }
+  ctx.stroke();
+
   // camino de tierra
-  ctx.strokeStyle = '#4a3f2c'; ctx.lineWidth = 74; ctx.lineCap = 'round'; ctx.globalAlpha = 0.5;
-  ctx.beginPath(); ctx.moveTo(WORLD.w * 0.5 - cam.x, 0 - cam.y); ctx.bezierCurveTo(WORLD.w*0.62-cam.x, WORLD.h*0.3-cam.y, WORLD.w*0.36-cam.x, WORLD.h*0.68-cam.y, WORLD.w*0.52-cam.x, WORLD.h-cam.y); ctx.stroke();
+  ctx.strokeStyle = '#6a5a3e'; ctx.lineWidth = 62; ctx.lineCap = 'round'; ctx.globalAlpha = 0.38;
+  ctx.beginPath();
+  ctx.moveTo(WORLD.w * 0.5 - cam.x, -cam.y);
+  ctx.bezierCurveTo(WORLD.w * 0.62 - cam.x, WORLD.h * 0.3 - cam.y, WORLD.w * 0.36 - cam.x, WORLD.h * 0.68 - cam.y, WORLD.w * 0.52 - cam.x, WORLD.h - cam.y);
+  ctx.stroke();
   ctx.globalAlpha = 1;
 }
 
@@ -460,9 +483,12 @@ function drawDecor(d, cam) {
   const x = d.x - cam.x, y = d.y - cam.y, s = d.s;
   if (x < -80 || y < -80 || x > VW + 80 || y > VH + 80) return;
   if (d.kind === 'tree') {
-    ctx.fillStyle = '#2a2016'; ctx.fillRect(x - 3 * s, y - 6 * s, 6 * s, 16 * s);
-    ctx.fillStyle = '#2f4a25'; ctx.beginPath(); ctx.arc(x, y - 16 * s, 15 * s, 0, TAU); ctx.fill();
-    ctx.fillStyle = '#3c5f2f'; ctx.beginPath(); ctx.arc(x - 5 * s, y - 21 * s, 10 * s, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
+    ctx.beginPath(); ctx.ellipse(x, y + 2 * s, 13 * s, 5 * s, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#3a2c1c'; ctx.fillRect(x - 3.4 * s, y - 8 * s, 6.8 * s, 18 * s);
+    ctx.fillStyle = '#2c5222'; ctx.beginPath(); ctx.arc(x, y - 19 * s, 17 * s, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#437c2d'; ctx.beginPath(); ctx.arc(x - 6 * s, y - 26 * s, 11 * s, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#4f8d36'; ctx.beginPath(); ctx.arc(x + 7 * s, y - 22 * s, 7 * s, 0, TAU); ctx.fill();
   } else if (d.kind === 'rock') {
     ctx.fillStyle = '#4a4f52'; ctx.beginPath(); ctx.ellipse(x, y, 11 * s, 8 * s, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = '#5c6266'; ctx.beginPath(); ctx.ellipse(x - 2 * s, y - 3 * s, 7 * s, 5 * s, 0, 0, TAU); ctx.fill();
@@ -476,38 +502,72 @@ function shadow(x, y, r) { ctx.fillStyle = 'rgba(0,0,0,.32)'; ctx.beginPath(); c
 
 function drawPlayer(cam) {
   const x = S.x - cam.x, y = S.y - cam.y;
-  shadow(x, y, S.r);
-  // capa
-  ctx.fillStyle = '#3a2a1c';
-  ctx.beginPath(); ctx.ellipse(x - Math.cos(S.face) * 5, y - Math.sin(S.face) * 3 + 2, S.r * 1.05, S.r * 0.95, 0, 0, TAU); ctx.fill();
-  // cuerpo orco
-  ctx.fillStyle = '#5f8a3f';
-  ctx.beginPath(); ctx.arc(x, y, S.r * 0.92, 0, TAU); ctx.fill();
-  ctx.fillStyle = '#6f9c49';
-  ctx.beginPath(); ctx.arc(x - 3, y - 3, S.r * 0.62, 0, TAU); ctx.fill();
-  // cabeza / coleta
-  ctx.fillStyle = '#4d7333';
-  ctx.beginPath(); ctx.arc(x, y - S.r * 0.5, S.r * 0.62, 0, TAU); ctx.fill();
-  ctx.fillStyle = '#171310';
-  ctx.beginPath(); ctx.ellipse(x - Math.cos(S.face) * 6, y - S.r * 0.55, 6, 8, S.face, 0, TAU); ctx.fill();
+  const R = S.r;
+  const fx = Math.cos(S.face), fy = Math.sin(S.face);
+  const px = -fy, py = fx;                       // perpendicular (eje de los hombros)
+
+  shadow(x, y, R);
+
+  // capa de lobo, detrás
+  ctx.fillStyle = '#4a3520';
+  ctx.beginPath();
+  ctx.ellipse(x - fx * 4, y - fy * 4 + 4, R * 0.92, R * 1.05, S.face, 0, TAU);
+  ctx.fill();
+
+  // cuerpo de orco
+  ctx.fillStyle = '#5f8f3e';
+  ctx.beginPath(); ctx.arc(x, y, R * 0.88, 0, TAU); ctx.fill();
+  ctx.lineWidth = 2.2; ctx.strokeStyle = '#2d4a1c'; ctx.stroke();
+
+  // hombreras de cuero
+  ctx.fillStyle = '#6b4a2a';
+  ctx.beginPath(); ctx.arc(x + px * R * 0.85, y + py * R * 0.85, R * 0.34, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - px * R * 0.85, y - py * R * 0.85, R * 0.34, 0, TAU); ctx.fill();
+
+  // cabeza, ligeramente adelantada
+  const hx = x + fx * R * 0.35, hy = y + fy * R * 0.35 - R * 0.15;
+  ctx.fillStyle = '#7cb253';
+  ctx.beginPath(); ctx.arc(hx, hy, R * 0.62, 0, TAU); ctx.fill();
+  ctx.lineWidth = 1.8; ctx.strokeStyle = '#2d4a1c'; ctx.stroke();
+
+  // coleta corta (detrás de la cabeza)
+  ctx.fillStyle = '#191410';
+  ctx.beginPath();
+  ctx.ellipse(hx - fx * R * 0.54, hy - fy * R * 0.54, R * 0.19, R * 0.14, S.face, 0, TAU);
+  ctx.fill();
+
   // ojos rojos
   ctx.fillStyle = '#ff5a3c';
-  const ex = Math.cos(S.face), ey = Math.sin(S.face);
-  ctx.beginPath(); ctx.arc(x + ex * 7 - ey * 4, y - S.r * 0.5 + ey * 7 + ex * -0.5, 2.1, 0, TAU); ctx.fill();
-  ctx.beginPath(); ctx.arc(x + ex * 7 + ey * 4, y - S.r * 0.5 + ey * 7 + ex * -0.5, 2.1, 0, TAU); ctx.fill();
-  // martillo (gira al atacar)
+  ctx.beginPath();
+  ctx.arc(hx + fx * R * 0.33 + px * R * 0.23, hy + fy * R * 0.33 + py * R * 0.23, R * 0.135, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(hx + fx * R * 0.33 - px * R * 0.23, hy + fy * R * 0.33 - py * R * 0.23, R * 0.135, 0, TAU);
+  ctx.fill();
+
+  // martillo grande (arma icónica)
   const swing = S.swing > 0 ? (1 - S.swing / 0.18) : 0;
-  const a = S.swing > 0 ? S.swingDir - HAMMER.arc / 2 + HAMMER.arc * swing : S.face + 0.9;
-  const hx = x + Math.cos(a) * (S.r + 13), hy = y + Math.sin(a) * (S.r + 13);
-  ctx.save(); ctx.translate(hx, hy); ctx.rotate(a);
-  ctx.fillStyle = '#6b4a2a'; ctx.fillRect(-3, -17, 6, 30);
-  ctx.fillStyle = '#8d9aa3'; ctx.fillRect(-9, -20, 18, 10);
-  ctx.fillStyle = '#b3c0c8'; ctx.fillRect(-9, -20, 18, 4);
+  const a = S.swing > 0 ? S.swingDir - HAMMER.arc / 2 + HAMMER.arc * swing : S.face + 0.85;
+  // brazo hacia el arma
+  ctx.strokeStyle = '#4f7a34'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x + px * R * 0.5, y + py * R * 0.5);
+  ctx.lineTo(x + Math.cos(a) * (R + 7), y + Math.sin(a) * (R + 7)); ctx.stroke();
+
+  ctx.save();
+  ctx.translate(x + Math.cos(a) * (R + 7), y + Math.sin(a) * (R + 7));
+  ctx.rotate(a);
+  ctx.fillStyle = '#6b4a2a'; ctx.fillRect(-3.2, -20, 6.4, 36);
+  ctx.fillStyle = '#6f7c85'; ctx.fillRect(-11, -27, 22, 13);
+  ctx.fillStyle = '#9fb0ba'; ctx.fillRect(-11, -27, 22, 5);
+  ctx.strokeStyle = '#2d3a42'; ctx.lineWidth = 1.4; ctx.strokeRect(-11, -27, 22, 13);
   ctx.restore();
+
   // estela del golpe
   if (S.swing > 0) {
-    ctx.strokeStyle = `rgba(255,220,150,${S.swing / 0.18 * 0.55})`; ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.arc(x, y, HAMMER.range * S.areaMul * 0.72, S.swingDir - HAMMER.arc / 2, S.swingDir + HAMMER.arc / 2); ctx.stroke();
+    ctx.strokeStyle = `rgba(255,225,160,${S.swing / 0.18 * 0.5})`; ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(x, y, HAMMER.range * S.areaMul * 0.72, S.swingDir - HAMMER.arc / 2, S.swingDir + HAMMER.arc / 2);
+    ctx.stroke();
   }
 }
 

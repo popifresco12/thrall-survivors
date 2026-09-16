@@ -17,11 +17,13 @@
   .bar > i{display:block;height:100%;width:0;transition:width .12s linear}
   #hpFill{background:linear-gradient(90deg,#e14b3a,#ff8a5c)}
   #xpFill{background:linear-gradient(90deg,#4ea8ff,#8ad2ff)}
-  #topRow{display:flex;gap:10px;align-items:center;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
-  #topRow b{font-size:15px}
-  .chip{background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:4px 10px;font-size:11px}
-  #bars{width:min(46vw,340px)}
-  #timer{position:absolute;top:10px;right:12px;font-size:26px;font-weight:700;letter-spacing:.05em;
+  #topRow{display:flex;gap:8px;align-items:center;font-size:12px;letter-spacing:.06em;text-transform:uppercase;min-width:0}
+  #topRow b{font-size:14px}
+  .chip{background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.16);border-radius:999px;
+    padding:3px 9px;font-size:10px;white-space:nowrap}
+  #bars{width:min(48vw,320px);flex:0 1 auto;min-width:70px}
+  #statusRow{display:flex;gap:8px;align-items:baseline;margin-top:3px}
+  #timer{font-size:clamp(18px,5.2vw,26px);font-weight:700;letter-spacing:.05em;
     text-shadow:0 2px 8px #000;font-variant-numeric:tabular-nums}
   #skillBox{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px}
   #skillRing{width:46px;height:46px;border-radius:50%;background:rgba(0,0,0,.55);
@@ -67,9 +69,11 @@
     </div>
     <span class="chip">Nv <b id="lvl">1</b></span>
     <span class="chip">☠ <b id="kills">0</b></span>
+  </div>
+  <div id="statusRow">
+    <span id="timer">5:00</span>
     <span class="chip" id="waveChip">Oleada 1</span>
   </div>
-  <div id="timer">5:00</div>
   <div id="skillBox">
     <div id="skillRing"><i id="skillCd"></i><span>⚡</span></div>
     <div id="skillLabel">Cadena de relámpagos</div>
